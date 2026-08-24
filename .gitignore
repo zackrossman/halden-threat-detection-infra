@@ -1,0 +1,25 @@
+# Local Terraform working directory
+.terraform/
+.terraform.tfstate.lock.info
+
+# State — kept in the remote azurerm backend, never in git
+*.tfstate
+*.tfstate.*
+
+# Variable files hold environment-specific and sensitive values
+*.tfvars
+*.tfvars.json
+!terraform.tfvars.example
+
+# Plan output can contain resolved secret values
+*.tfplan
+plan.out
+
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc

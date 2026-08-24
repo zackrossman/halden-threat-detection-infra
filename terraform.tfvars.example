@@ -1,0 +1,28 @@
+# Copy to terraform.tfvars and replace every CHANGE_ME before running Terraform.
+# terraform.tfvars is gitignored — keep it that way.
+
+subscription_id     = "CHANGE_ME"
+environment         = "production"
+location            = "westeurope"
+resource_group_name = "CHANGE_ME"
+
+cluster_name         = "CHANGE_ME"
+namespace            = "halden"
+virtual_network_name = "CHANGE_ME"
+database_subnet_name = "CHANGE_ME"
+
+container_registry = "CHANGE_ME"
+image_tag          = "CHANGE_ME"
+replica_count      = 3
+
+postgres_administrator_login = "CHANGE_ME"
+
+tags = {
+  cost_center = "CHANGE_ME"
+}
+
+# postgres_administrator_password and halden_gateway_key are deliberately absent.
+# Terraform reads them from the environment, so they never land in a file:
+#
+#   export TF_VAR_postgres_administrator_password="$(az keyvault secret show ... --query value -o tsv)"
+#   export TF_VAR_halden_gateway_key="$(az keyvault secret show ... --query value -o tsv)"
