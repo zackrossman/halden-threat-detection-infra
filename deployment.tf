@@ -1,4 +1,14 @@
 locals {
+  # The listener is TLS when a serving certificate is mounted, and mutual TLS
+  # when a client CA is mounted alongside it. Both are empty before the
+  # cutover, which leaves the service on plaintext 8000.
+  tls_enabled   = var.tls_secret_name != ""
+  mtls_enabled  = var.tls_client_ca_secret_name != ""
+  service_port  = local.tls_enabled ? 8443 : 8000
+  tls_mount_dir = "/etc/halden/tls"
+}
+
+locals {
   # Built from the server's own attributes so the host does not have to be
   # repeated in a variable. sslmode=require pairs with require_secure_transport
   # on the server.
@@ -83,7 +93,7 @@ resource "kubernetes_deployment" "threat_detection" {
 
           port {
             name           = "http"
-            container_port = 8000
+            container_port = local.service_port
             protocol       = "TCP"
           }
 
@@ -116,6 +126,28 @@ resource "kubernetes_deployment" "threat_detection" {
           }
 
           env {
+            name  = "HALDEN_LISTEN_PORT"
+            value = tostring(local.service_port)
+          }
+
+          # Empty until the certificate is mounted. The service refuses to
+          # start on one of the pair without the other, so these move together.
+          env {
+            name  = "HALDEN_TLS_CERT_FILE"
+            value = local.tls_enabled ? "${local.tls_mount_dir}/tls.crt" : ""
+          }
+
+          env {
+            name  = "HALDEN_TLS_KEY_FILE"
+            value = local.tls_enabled ? "${local.tls_mount_dir}/tls.key" : ""
+          }
+
+          env {
+            name  = "HALDEN_TLS_CLIENT_CA_FILE"
+            value = local.mtls_enabled ? "${local.tls_mount_dir}-client-ca/ca.crt" : ""
+          }
+
+          env {
             name = "HALDEN_DATABASE_URL"
 
             value_from {
@@ -140,8 +172,9 @@ resource "kubernetes_deployment" "threat_detection" {
 
           readiness_probe {
             http_get {
-              path = "/healthz"
-              port = "http"
+              path   = "/healthz"
+              port   = "http"
+              scheme = local.tls_enabled ? "HTTPS" : "HTTP"
             }
 
             initial_delay_seconds = 5
@@ -152,8 +185,9 @@ resource "kubernetes_deployment" "threat_detection" {
 
           liveness_probe {
             http_get {
-              path = "/healthz"
-              port = "http"
+              path   = "/healthz"
+              port   = "http"
+              scheme = local.tls_enabled ? "HTTPS" : "HTTP"
             }
 
             initial_delay_seconds = 20
@@ -181,6 +215,26 @@ resource "kubernetes_deployment" "threat_detection" {
             name       = "artifacts"
             mount_path = "/var/lib/halden/artifacts"
           }
+
+          dynamic "volume_mount" {
+            for_each = local.tls_enabled ? [1] : []
+
+            content {
+              name       = "tls"
+              mount_path = local.tls_mount_dir
+              read_only  = true
+            }
+          }
+
+          dynamic "volume_mount" {
+            for_each = local.mtls_enabled ? [1] : []
+
+            content {
+              name       = "tls-client-ca"
+              mount_path = "${local.tls_mount_dir}-client-ca"
+              read_only  = true
+            }
+          }
         }
 
         volume {
@@ -197,6 +251,30 @@ resource "kubernetes_deployment" "threat_detection" {
 
           empty_dir {
             size_limit = "2Gi"
+          }
+        }
+
+        dynamic "volume" {
+          for_each = local.tls_enabled ? [1] : []
+
+          content {
+            name = "tls"
+
+            secret {
+              secret_name = var.tls_secret_name
+            }
+          }
+        }
+
+        dynamic "volume" {
+          for_each = local.mtls_enabled ? [1] : []
+
+          content {
+            name = "tls-client-ca"
+
+            secret {
+              secret_name = var.tls_client_ca_secret_name
+            }
           }
         }
       }

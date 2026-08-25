@@ -127,6 +127,18 @@ variable "halden_internal_token_public_key" {
   type        = string
 }
 
+variable "tls_secret_name" {
+  description = "Kubernetes TLS secret holding the serving certificate and key for halden-threat-detection, conventionally issued by cert-manager. Empty leaves the service on plaintext HTTP, which is the state before the TLS cutover."
+  type        = string
+  default     = ""
+}
+
+variable "tls_client_ca_secret_name" {
+  description = "Kubernetes secret holding ca.crt, the CA that signs client certificates. Setting it turns on mutual TLS: a caller without a certificate that CA signed is refused at the handshake. Requires tls_secret_name."
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   description = "Tags applied to every Azure resource created here."
   type        = map(string)
