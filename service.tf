@@ -24,9 +24,14 @@ resource "kubernetes_service" "threat_detection" {
       "app.kubernetes.io/name" = local.service_name
     }
 
+    # The service port matches the container port, because that is the port
+    # callers name: THREAT_DETECTION_URL points at
+    # halden-threat-detection.halden.svc.cluster.local:8000, and moves to :8443
+    # with the TLS cutover. Publishing 80 here meant that URL resolved to a
+    # port this Service did not expose.
     port {
       name        = "http"
-      port        = 80
+      port        = local.service_port
       target_port = "http"
       protocol    = "TCP"
     }
