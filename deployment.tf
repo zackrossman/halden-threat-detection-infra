@@ -105,6 +105,16 @@ resource "kubernetes_deployment" "threat_detection" {
             }
           }
 
+          # Required by the service and read at startup: without it the
+          # container exits before it serves a request. Carried as a plain
+          # value rather than through the runtime secret because a public key
+          # is not secret, and keeping it out of the secret means rotating the
+          # signing keypair does not roll pods on the secret's revision.
+          env {
+            name  = "HALDEN_INTERNAL_TOKEN_PUBLIC_KEY"
+            value = var.halden_internal_token_public_key
+          }
+
           env {
             name = "HALDEN_DATABASE_URL"
 
