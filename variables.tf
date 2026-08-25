@@ -122,10 +122,9 @@ variable "halden_gateway_key" {
   sensitive   = true
 }
 
-variable "halden_internal_token_secret" {
-  description = "Secret the service verifies halden-identity's short-lived tokens with. The same value halden-identity signs them with. Supply via TF_VAR_halden_internal_token_secret; never commit it."
+variable "halden_internal_token_public_key" {
+  description = "PEM-encoded RSA public key the service verifies halden-identity's short-lived tokens with. The matching private key stays in halden-identity, so this value cannot mint a token — it is a public key, not a secret. Supply via TF_VAR_halden_internal_token_public_key."
   type        = string
-  sensitive   = true
 }
 
 variable "tags" {
