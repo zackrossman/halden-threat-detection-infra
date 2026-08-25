@@ -21,8 +21,13 @@ tags = {
   cost_center = "CHANGE_ME"
 }
 
-# postgres_administrator_password and halden_gateway_key are deliberately absent.
-# Terraform reads them from the environment, so they never land in a file:
+# postgres_administrator_password, halden_gateway_key and
+# halden_internal_token_secret are deliberately absent. Terraform reads them
+# from the environment, so they never land in a file:
 #
 #   export TF_VAR_postgres_administrator_password="$(az keyvault secret show ... --query value -o tsv)"
 #   export TF_VAR_halden_gateway_key="$(az keyvault secret show ... --query value -o tsv)"
+#   export TF_VAR_halden_internal_token_secret="$(az keyvault secret show ... --query value -o tsv)"
+#
+# halden_internal_token_secret must be the same value halden-identity signs
+# with; the two services share it. Rotating it means rolling both.

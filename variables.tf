@@ -122,6 +122,12 @@ variable "halden_gateway_key" {
   sensitive   = true
 }
 
+variable "halden_internal_token_secret" {
+  description = "Secret the service verifies halden-identity's short-lived tokens with. The same value halden-identity signs them with. Supply via TF_VAR_halden_internal_token_secret; never commit it."
+  type        = string
+  sensitive   = true
+}
+
 variable "tags" {
   description = "Tags applied to every Azure resource created here."
   type        = map(string)
